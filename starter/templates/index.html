@@ -1,20 +1,35 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sudoku Game</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <h1>Sudoku Game</h1>
-  <div id="sudoku-board"></div>
-  <div class="controls">
-    <button id="new-game">New Game</button>
-    <button id="hint-cell">Hint</button>
-    <button id="check-solution">Check Solution</button>
-    <span id="timer-display">Time: 00:00</span>
-    <span id="message"></span>
-  </div>
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="title-group">
+        <h1>Sudoku Game</h1>
+        <p class="subtitle">Play, check your progress, and enjoy a calm puzzle experience.</p>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+        <span class="theme-toggle__icon" aria-hidden="true">🌙</span>
+        <span class="theme-toggle__label">Dark mode</span>
+      </button>
+    </header>
+
+    <div class="controls">
+      <button id="new-game">New Game</button>
+      <button id="hint-cell">Hint</button>
+      <button id="check-solution">Check Solution</button>
+      <span id="timer-display">Time: 00:00</span>
+      <span id="message"></span>
+    </div>
+
+    <div id="sudoku-board" class="sudoku-board" aria-label="Sudoku board"></div>
+  </main>
+
   <script src="/static/main.js"></script>
 </body>
 </html>

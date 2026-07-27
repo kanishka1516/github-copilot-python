@@ -26,6 +26,16 @@ def assert_valid_board(board):
             assert len(values) == len(set(values))
 
 
+def test_index_page_includes_theme_toggle():
+    client = flask_app.app.test_client()
+    response = client.get('/')
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'theme-toggle' in html
+    assert 'aria-label="Toggle dark mode"' in html
+
+
 def test_create_empty_board_returns_empty_grid():
     board = sudoku_logic.create_empty_board()
 

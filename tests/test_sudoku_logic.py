@@ -1,4 +1,5 @@
 from starter import sudoku_logic
+from starter import app as flask_app
 
 
 def assert_valid_board(board):
@@ -72,6 +73,45 @@ def test_generated_puzzle_has_a_unique_solution():
     puzzle, _ = sudoku_logic.generate_puzzle(clues=35)
 
     assert sudoku_logic.ensure_unique_solution(puzzle) is True
+
+
+def test_check_solution_reports_incorrect_cells():
+    puzzle, solution = sudoku_logic.generate_puzzle(clues=35)
+    flask_app.CURRENT['solution'] = solution
+    flask_app.CURRENT['puzzle'] = puzzle
+
+    client = flask_app.app.test_client()
+    response = client.post('/check', json={'board': solution})
+
+    assert response.status_code == 200
+    assert response.get_json()['incorrect'] == []
+
+
+def test_check_solution_detects_completion_when_board_is_complete():
+    puzzle, solution = sudoku_logic.generate_puzzle(clues=35)
+    flask_app.CURRENT['solution'] = solution
+    flask_app.CURRENT['puzzle'] = puzzle
+
+    client = flask_app.app.test_client()
+    response = client.post('/check', json={'board': solution})
+
+    assert response.get_json()['completed'] is True
+
+
+def test_check_solution_reports_incorrect_cells_for_wrong_entries():
+    puzzle, solution = sudoku_logic.generate_puzzle(clues=35)
+    flask_app.CURRENT['solution'] = solution
+    flask_app.CURRENT['puzzle'] = puzzle
+
+    wrong_board = [row[:] for row in solution]
+    wrong_board[0][0] = 1 if wrong_board[0][0] != 1 else 2
+
+    client = flask_app.app.test_client()
+    response = client.post('/check', json={'board': wrong_board})
+
+    assert response.status_code == 200
+    assert response.get_json()['incorrect'] == [[0, 0]]
+    assert response.get_json()['completed'] is False
 
 
 def test_generate_puzzle_for_easy_difficulty():

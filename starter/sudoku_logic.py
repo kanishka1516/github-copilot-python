@@ -64,11 +64,42 @@ def remove_cells(board: Board, clues: int) -> None:
             attempts -= 1
 
 
+def count_solutions(board: Board) -> int:
+    """Count the number of valid solutions for a Sudoku board."""
+    board_copy = deep_copy(board)
+    return _count_solutions(board_copy)
+
+
+def _count_solutions(board: Board, solution_count: int = 0) -> int:
+    """Recursively count solutions up to a limit of 2."""
+    for row in range(SIZE):
+        for col in range(SIZE):
+            if board[row][col] != EMPTY:
+                continue
+
+            for candidate in range(1, SIZE + 1):
+                if is_safe(board, row, col, candidate):
+                    board[row][col] = candidate
+                    solution_count = _count_solutions(board, solution_count)
+                    board[row][col] = EMPTY
+                    if solution_count >= 2:
+                        return solution_count
+            return solution_count
+
+    return solution_count + 1
+
+
+def ensure_unique_solution(board: Board) -> bool:
+    """Return True when the provided puzzle has exactly one solution."""
+    return count_solutions(board) == 1
+
+
 def generate_puzzle(clues: int = 35) -> tuple[Board, Board]:
     """Generate a Sudoku puzzle and its solved solution."""
-    board = create_empty_board()
-    fill_board(board)
-    solution = deep_copy(board)
-    remove_cells(board, clues)
-    puzzle = deep_copy(board)
-    return puzzle, solution
+    while True:
+        board = create_empty_board()
+        fill_board(board)
+        solution = deep_copy(board)
+        remove_cells(board, clues)
+        if ensure_unique_solution(board):
+            return deep_copy(board), solution

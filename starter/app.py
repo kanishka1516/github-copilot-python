@@ -2,6 +2,8 @@ import time
 
 from flask import Flask, render_template, jsonify, request
 
+LEADERBOARD_LIMIT = 10
+
 try:
     from starter import sudoku_logic
 except ImportError:  # pragma: no cover - fallback for running app.py directly
@@ -15,6 +17,7 @@ CURRENT = {
     'solution': None,
     'timer_started_at': None,
     'timer_completed_at': None,
+    'difficulty': 'medium',
 }
 
 
@@ -32,6 +35,19 @@ def _get_elapsed_seconds() -> float:
     end_time = CURRENT.get('timer_completed_at') or time.monotonic()
     return round(end_time - CURRENT['timer_started_at'], 2)
 
+
+def update_leaderboard_entries(entries, name: str, time_value: float, difficulty: str, limit: int = LEADERBOARD_LIMIT):
+    """Return a leaderboard list with the newest score inserted and the fastest entries retained."""
+    new_entry = {
+        'name': name.strip() or 'Anonymous',
+        'time': round(float(time_value), 2),
+        'difficulty': (difficulty or 'medium').lower(),
+    }
+    updated_entries = [dict(entry) for entry in entries] + [new_entry]
+    updated_entries.sort(key=lambda entry: (entry['time'], entry['name'].lower()))
+    return updated_entries[:limit]
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -46,8 +62,9 @@ def new_game():
         puzzle, solution = sudoku_logic.generate_puzzle(clues=int(clues), difficulty=difficulty)
     CURRENT['puzzle'] = puzzle
     CURRENT['solution'] = solution
+    CURRENT['difficulty'] = difficulty
     _reset_timer()
-    return jsonify({'puzzle': puzzle, 'elapsed_seconds': _get_elapsed_seconds()})
+    return jsonify({'puzzle': puzzle, 'elapsed_seconds': _get_elapsed_seconds(), 'difficulty': CURRENT['difficulty']})
 
 @app.route('/hint', methods=['POST'])
 def get_hint():
@@ -73,7 +90,7 @@ def get_hint():
 
 @app.route('/check', methods=['POST'])
 def check_solution():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     board = data.get('board')
     solution = CURRENT.get('solution')
     if solution is None:
@@ -93,7 +110,32 @@ def check_solution():
         'incorrect': incorrect,
         'completed': completed,
         'elapsed_seconds': _get_elapsed_seconds(),
+        'difficulty': CURRENT.get('difficulty', 'medium'),
     })
+
+
+@app.route('/leaderboard', methods=['POST'])
+def save_leaderboard_entry():
+    data = request.get_json(silent=True) or {}
+    name = data.get('name')
+    time_value = data.get('time')
+    difficulty = data.get('difficulty')
+
+    if time_value is None:
+        return jsonify({'error': 'Time is required'}), 400
+
+    if not isinstance(time_value, (int, float)):
+        return jsonify({'error': 'Time must be numeric'}), 400
+
+    # The browser stores the leaderboard in localStorage, but the route exists so the
+    # app can validate the payload and keep the same contract for future expansion.
+    entry = {
+        'name': str(name or 'Anonymous').strip() or 'Anonymous',
+        'time': round(float(time_value), 2),
+        'difficulty': str(difficulty or 'medium').lower(),
+    }
+    return jsonify({'entry': entry})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

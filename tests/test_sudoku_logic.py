@@ -125,6 +125,27 @@ def test_new_game_starts_timer(monkeypatch):
     assert flask_app.CURRENT['timer_completed_at'] is None
 
 
+def test_new_game_tracks_selected_difficulty():
+    client = flask_app.app.test_client()
+    response = client.get('/new?difficulty=hard')
+
+    assert response.status_code == 200
+    assert flask_app.CURRENT['difficulty'] == 'hard'
+
+
+def test_check_solution_includes_difficulty_in_response():
+    puzzle, solution = sudoku_logic.generate_puzzle(clues=35)
+    flask_app.CURRENT['solution'] = solution
+    flask_app.CURRENT['puzzle'] = puzzle
+    flask_app.CURRENT['difficulty'] = 'hard'
+
+    client = flask_app.app.test_client()
+    response = client.post('/check', json={'board': solution})
+
+    assert response.status_code == 200
+    assert response.get_json()['difficulty'] == 'hard'
+
+
 def test_check_solution_stops_timer_and_reports_elapsed_time(monkeypatch):
     monkeypatch.setattr(flask_app.time, 'monotonic', lambda: 100.0)
     client = flask_app.app.test_client()
@@ -139,6 +160,21 @@ def test_check_solution_stops_timer_and_reports_elapsed_time(monkeypatch):
     assert response.get_json()['completed'] is True
     assert response.get_json()['elapsed_seconds'] == 5.0
     assert flask_app.CURRENT['timer_completed_at'] == 105.0
+
+
+def test_update_leaderboard_keeps_fastest_ten_scores():
+    existing_entries = [
+        {'name': f'Player{i}', 'time': 20 + i, 'difficulty': 'easy'}
+        for i in range(9)
+    ]
+
+    updated = flask_app.update_leaderboard_entries(existing_entries, 'New Player', 15, 'hard', limit=10)
+
+    assert len(updated) == 10
+    assert updated[0]['name'] == 'New Player'
+    assert updated[0]['time'] == 15
+    assert updated[0]['difficulty'] == 'hard'
+    assert updated[-1]['name'] == 'Player8'
 
 
 def test_get_hint_returns_first_empty_cell():

@@ -95,3 +95,37 @@ button:hover {
     font-size: 16px;
     color: #d32f2f;
 }
+
+.leaderboard-panel {
+    max-width: 460px;
+    margin: 24px auto 40px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.leaderboard-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.leaderboard-form input {
+    padding: 8px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+}
+
+#leaderboard-list {
+    text-align: left;
+    margin: 0 auto;
+    padding-left: 24px;
+    max-width: 320px;
+}
+
+#leaderboard-list li {
+    margin: 6px 0;
+}

@@ -1,8 +1,11 @@
 // Client-side rendering and interaction for the Flask-backed Sudoku
 const SIZE = 9;
+const LEADERBOARD_KEY = 'sudoku-leaderboard';
 let puzzle = [];
 let timerInterval = null;
 let timerStartedAt = null;
+let currentDifficulty = 'medium';
+let completedTimeSeconds = 0;
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
@@ -80,10 +83,52 @@ function renderPuzzle(puz) {
   }
 }
 
+function getLeaderboardEntries() {
+  try {
+    const raw = window.localStorage.getItem(LEADERBOARD_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveLeaderboardEntries(entries) {
+  window.localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries));
+}
+
+function renderLeaderboard() {
+  const entries = getLeaderboardEntries();
+  const list = document.getElementById('leaderboard-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (entries.length === 0) {
+    const emptyItem = document.createElement('li');
+    emptyItem.textContent = 'No scores yet.';
+    list.appendChild(emptyItem);
+    return;
+  }
+  entries.forEach((entry, index) => {
+    const item = document.createElement('li');
+    item.textContent = `${index + 1}. ${entry.name} — ${formatTime(entry.time)} — ${entry.difficulty}`;
+    list.appendChild(item);
+  });
+}
+
+function addLeaderboardEntry(name, timeSeconds, difficulty) {
+  const entries = getLeaderboardEntries();
+  const newEntries = entries.concat([{ name, time: timeSeconds, difficulty }])
+    .sort((a, b) => a.time - b.time)
+    .slice(0, 10);
+  saveLeaderboardEntries(newEntries);
+  renderLeaderboard();
+}
+
 async function newGame() {
   const res = await fetch('/new');
   const data = await res.json();
   renderPuzzle(data.puzzle);
+  currentDifficulty = data.difficulty || currentDifficulty;
+  completedTimeSeconds = 0;
   startTimer();
   document.getElementById('message').innerText = '';
 }
@@ -124,6 +169,7 @@ async function checkSolution() {
   if (incorrect.size === 0) {
     stopTimer();
     const elapsedSeconds = data.elapsed_seconds ?? ((Date.now() - timerStartedAt) / 1000);
+    completedTimeSeconds = elapsedSeconds;
     updateTimerDisplay(elapsedSeconds);
     msg.style.color = '#388e3c';
     msg.innerText = 'Congratulations! You solved it!';

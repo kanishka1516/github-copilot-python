@@ -123,11 +123,17 @@ function addLeaderboardEntry(name, timeSeconds, difficulty) {
   renderLeaderboard();
 }
 
+function getSelectedDifficulty() {
+  const select = document.getElementById('difficulty-select');
+  return select ? select.value : currentDifficulty;
+}
+
 async function newGame() {
-  const res = await fetch('/new');
+  const difficulty = getSelectedDifficulty();
+  const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
   const data = await res.json();
   renderPuzzle(data.puzzle);
-  currentDifficulty = data.difficulty || currentDifficulty;
+  currentDifficulty = data.difficulty || difficulty;
   completedTimeSeconds = 0;
   startTimer();
   document.getElementById('message').innerText = '';

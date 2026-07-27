@@ -94,8 +94,19 @@ def ensure_unique_solution(board: Board) -> bool:
     return count_solutions(board) == 1
 
 
-def generate_puzzle(clues: int = 35) -> tuple[Board, Board]:
+def generate_puzzle(clues: int | None = None, difficulty: str | None = None) -> tuple[Board, Board]:
     """Generate a Sudoku puzzle and its solved solution."""
+    if clues is None:
+        clue_counts = {
+            "easy": 40,
+            "medium": 35,
+            "hard": 30,
+        }
+        if difficulty is None:
+            difficulty = "medium"
+        difficulty_key = difficulty.lower()
+        clues = clue_counts.get(difficulty_key, clue_counts["medium"])
+
     while True:
         board = create_empty_board()
         fill_board(board)

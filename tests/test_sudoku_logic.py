@@ -72,3 +72,27 @@ def test_generated_puzzle_has_a_unique_solution():
     puzzle, _ = sudoku_logic.generate_puzzle(clues=35)
 
     assert sudoku_logic.ensure_unique_solution(puzzle) is True
+
+
+def test_generate_puzzle_for_easy_difficulty():
+    puzzle, solution = sudoku_logic.generate_puzzle(difficulty="easy")
+
+    assert sudoku_logic.ensure_unique_solution(puzzle) is True
+    assert sum(cell == sudoku_logic.EMPTY for row in puzzle for cell in row) == 81 - 40
+    assert len(solution) == sudoku_logic.SIZE
+
+
+def test_generate_puzzle_for_medium_difficulty():
+    puzzle, solution = sudoku_logic.generate_puzzle(difficulty="medium")
+
+    assert sudoku_logic.ensure_unique_solution(puzzle) is True
+    assert sum(cell == sudoku_logic.EMPTY for row in puzzle for cell in row) == 81 - 35
+    assert len(solution) == sudoku_logic.SIZE
+
+
+def test_generate_puzzle_for_hard_difficulty():
+    puzzle, solution = sudoku_logic.generate_puzzle(difficulty="hard")
+
+    assert sudoku_logic.ensure_unique_solution(puzzle) is True
+    assert sum(cell == sudoku_logic.EMPTY for row in puzzle for cell in row) == 81 - 30
+    assert len(solution) == sudoku_logic.SIZE

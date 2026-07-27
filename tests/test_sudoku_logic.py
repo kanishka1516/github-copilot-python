@@ -114,6 +114,33 @@ def test_check_solution_reports_incorrect_cells_for_wrong_entries():
     assert response.get_json()['completed'] is False
 
 
+def test_new_game_starts_timer(monkeypatch):
+    monkeypatch.setattr(flask_app.time, 'monotonic', lambda: 10.0)
+
+    client = flask_app.app.test_client()
+    response = client.get('/new')
+
+    assert response.status_code == 200
+    assert flask_app.CURRENT['timer_started_at'] == 10.0
+    assert flask_app.CURRENT['timer_completed_at'] is None
+
+
+def test_check_solution_stops_timer_and_reports_elapsed_time(monkeypatch):
+    monkeypatch.setattr(flask_app.time, 'monotonic', lambda: 100.0)
+    client = flask_app.app.test_client()
+    client.get('/new')
+
+    solution = flask_app.CURRENT['solution']
+
+    monkeypatch.setattr(flask_app.time, 'monotonic', lambda: 105.0)
+    response = client.post('/check', json={'board': solution})
+
+    assert response.status_code == 200
+    assert response.get_json()['completed'] is True
+    assert response.get_json()['elapsed_seconds'] == 5.0
+    assert flask_app.CURRENT['timer_completed_at'] == 105.0
+
+
 def test_get_hint_returns_first_empty_cell():
     solution = sudoku_logic.create_empty_board()
     assert sudoku_logic.fill_board(solution) is True

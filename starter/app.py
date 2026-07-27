@@ -1,3 +1,5 @@
+import time
+
 from flask import Flask, render_template, jsonify, request
 
 try:
@@ -7,11 +9,28 @@ except ImportError:  # pragma: no cover - fallback for running app.py directly
 
 app = Flask(__name__)
 
-# Keep a simple in-memory store for current puzzle and solution
+# Keep a simple in-memory store for current puzzle, solution, and timer state
 CURRENT = {
     'puzzle': None,
-    'solution': None
+    'solution': None,
+    'timer_started_at': None,
+    'timer_completed_at': None,
 }
+
+
+def _reset_timer() -> None:
+    """Start a new timer for the current game."""
+    CURRENT['timer_started_at'] = time.monotonic()
+    CURRENT['timer_completed_at'] = None
+
+
+def _get_elapsed_seconds() -> float:
+    """Return the elapsed time for the current game in seconds."""
+    if CURRENT.get('timer_started_at') is None:
+        return 0.0
+
+    end_time = CURRENT.get('timer_completed_at') or time.monotonic()
+    return round(end_time - CURRENT['timer_started_at'], 2)
 
 @app.route('/')
 def index():
@@ -27,7 +46,8 @@ def new_game():
         puzzle, solution = sudoku_logic.generate_puzzle(clues=int(clues), difficulty=difficulty)
     CURRENT['puzzle'] = puzzle
     CURRENT['solution'] = solution
-    return jsonify({'puzzle': puzzle})
+    _reset_timer()
+    return jsonify({'puzzle': puzzle, 'elapsed_seconds': _get_elapsed_seconds()})
 
 @app.route('/hint', methods=['POST'])
 def get_hint():
@@ -66,7 +86,14 @@ def check_solution():
                 incorrect.append([i, j])
 
     completed = len(incorrect) == 0 and all(cell != sudoku_logic.EMPTY for row in board for cell in row)
-    return jsonify({'incorrect': incorrect, 'completed': completed})
+    if completed and CURRENT.get('timer_completed_at') is None:
+        CURRENT['timer_completed_at'] = time.monotonic()
+
+    return jsonify({
+        'incorrect': incorrect,
+        'completed': completed,
+        'elapsed_seconds': _get_elapsed_seconds(),
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

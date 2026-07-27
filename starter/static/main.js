@@ -1,6 +1,8 @@
 // Client-side rendering and interaction for the Flask-backed Sudoku
 const SIZE = 9;
 let puzzle = [];
+let timerInterval = null;
+let timerStartedAt = null;
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
@@ -23,6 +25,37 @@ function createBoardElement() {
     }
     boardDiv.appendChild(rowDiv);
   }
+}
+
+function formatTime(seconds) {
+  const totalSeconds = Math.max(0, Math.round(seconds));
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const secs = String(totalSeconds % 60).padStart(2, '0');
+  return `${minutes}:${secs}`;
+}
+
+function updateTimerDisplay(seconds) {
+  const timerDisplay = document.getElementById('timer-display');
+  if (timerDisplay) {
+    timerDisplay.innerText = `Time: ${formatTime(seconds)}`;
+  }
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    window.clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function startTimer() {
+  stopTimer();
+  timerStartedAt = Date.now();
+  updateTimerDisplay(0);
+  timerInterval = window.setInterval(() => {
+    const elapsedSeconds = (Date.now() - timerStartedAt) / 1000;
+    updateTimerDisplay(elapsedSeconds);
+  }, 250);
 }
 
 function renderPuzzle(puz) {
@@ -51,6 +84,7 @@ async function newGame() {
   const res = await fetch('/new');
   const data = await res.json();
   renderPuzzle(data.puzzle);
+  startTimer();
   document.getElementById('message').innerText = '';
 }
 
@@ -88,6 +122,9 @@ async function checkSolution() {
     }
   }
   if (incorrect.size === 0) {
+    stopTimer();
+    const elapsedSeconds = data.elapsed_seconds ?? ((Date.now() - timerStartedAt) / 1000);
+    updateTimerDisplay(elapsedSeconds);
     msg.style.color = '#388e3c';
     msg.innerText = 'Congratulations! You solved it!';
   } else {

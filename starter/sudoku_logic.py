@@ -3,43 +3,58 @@ import random
 
 SIZE = 9
 EMPTY = 0
+Board = list[list[int]]
 
-def deep_copy(board):
+
+def deep_copy(board: Board) -> Board:
+    """Return a deep copy of the given Sudoku board."""
     return copy.deepcopy(board)
 
-def create_empty_board():
+
+def create_empty_board() -> Board:
+    """Create a new 9x9 Sudoku board filled with empty cells."""
     return [[EMPTY for _ in range(SIZE)] for _ in range(SIZE)]
 
-def is_safe(board, row, col, num):
-    # Check row and column
-    for x in range(SIZE):
-        if board[row][x] == num or board[x][col] == num:
+
+def is_safe(board: Board, row: int, col: int, num: int) -> bool:
+    """Return True when placing num at the given position is valid."""
+    for index in range(SIZE):
+        if board[row][index] == num or board[index][col] == num:
             return False
-    # Check 3x3 box
+
     start_row = row - row % 3
     start_col = col - col % 3
-    for i in range(3):
-        for j in range(3):
-            if board[start_row + i][start_col + j] == num:
+    for box_row in range(start_row, start_row + 3):
+        for box_col in range(start_col, start_col + 3):
+            if board[box_row][box_col] == num:
                 return False
+
     return True
 
-def fill_board(board):
+
+def fill_board(board: Board) -> bool:
+    """Recursively fill the board with a valid solved Sudoku grid."""
     for row in range(SIZE):
         for col in range(SIZE):
-            if board[row][col] == EMPTY:
-                possible = list(range(1, SIZE + 1))
-                random.shuffle(possible)
-                for candidate in possible:
-                    if is_safe(board, row, col, candidate):
-                        board[row][col] = candidate
-                        if fill_board(board):
-                            return True
-                        board[row][col] = EMPTY
-                return False
+            if board[row][col] != EMPTY:
+                continue
+
+            possible_numbers = list(range(1, SIZE + 1))
+            random.shuffle(possible_numbers)
+            for candidate in possible_numbers:
+                if is_safe(board, row, col, candidate):
+                    board[row][col] = candidate
+                    if fill_board(board):
+                        return True
+                    board[row][col] = EMPTY
+
+            return False
+
     return True
 
-def remove_cells(board, clues):
+
+def remove_cells(board: Board, clues: int) -> None:
+    """Remove values from the board until the number of clues is reached."""
     attempts = SIZE * SIZE - clues
     while attempts > 0:
         row = random.randrange(SIZE)
@@ -48,7 +63,9 @@ def remove_cells(board, clues):
             board[row][col] = EMPTY
             attempts -= 1
 
-def generate_puzzle(clues=35):
+
+def generate_puzzle(clues: int = 35) -> tuple[Board, Board]:
+    """Generate a Sudoku puzzle and its solved solution."""
     board = create_empty_board()
     fill_board(board)
     solution = deep_copy(board)

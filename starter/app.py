@@ -29,6 +29,28 @@ def new_game():
     CURRENT['solution'] = solution
     return jsonify({'puzzle': puzzle})
 
+@app.route('/hint', methods=['POST'])
+def get_hint():
+    data = request.get_json(silent=True) or {}
+    board = data.get('board')
+    puzzle = CURRENT.get('puzzle')
+    solution = CURRENT.get('solution')
+
+    if solution is None or puzzle is None:
+        return jsonify({'error': 'No game in progress'}), 400
+
+    if board is None:
+        return jsonify({'error': 'Board is required'}), 400
+
+    hint = sudoku_logic.get_hint(board, solution)
+    if hint is None:
+        return jsonify({'error': 'No empty cells remain'}), 400
+
+    row, col, value = hint
+    board[row][col] = value
+    return jsonify({'board': board, 'row': row, 'col': col, 'value': value})
+
+
 @app.route('/check', methods=['POST'])
 def check_solution():
     data = request.json

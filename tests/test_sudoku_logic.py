@@ -114,6 +114,42 @@ def test_check_solution_reports_incorrect_cells_for_wrong_entries():
     assert response.get_json()['completed'] is False
 
 
+def test_get_hint_returns_first_empty_cell():
+    solution = sudoku_logic.create_empty_board()
+    assert sudoku_logic.fill_board(solution) is True
+    board = [row[:] for row in solution]
+    board[0][0] = sudoku_logic.EMPTY
+
+    hint = sudoku_logic.get_hint(board, solution)
+
+    assert hint == (0, 0, solution[0][0])
+
+
+def test_hint_route_returns_hint_for_game_in_progress():
+    puzzle, solution = sudoku_logic.generate_puzzle(clues=35)
+    flask_app.CURRENT['solution'] = solution
+    flask_app.CURRENT['puzzle'] = puzzle
+
+    client = flask_app.app.test_client()
+    response = client.post('/hint', json={'board': [row[:] for row in puzzle]})
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['value'] == solution[data['row']][data['col']]
+    assert puzzle[data['row']][data['col']] == sudoku_logic.EMPTY
+
+
+def test_hint_route_requires_game_in_progress():
+    flask_app.CURRENT['solution'] = None
+    flask_app.CURRENT['puzzle'] = None
+
+    client = flask_app.app.test_client()
+    response = client.post('/hint', json={'board': sudoku_logic.create_empty_board()})
+
+    assert response.status_code == 400
+    assert response.get_json()['error'] == 'No game in progress'
+
+
 def test_generate_puzzle_for_easy_difficulty():
     puzzle, solution = sudoku_logic.generate_puzzle(difficulty="easy")
 

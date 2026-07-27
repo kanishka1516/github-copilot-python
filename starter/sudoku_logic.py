@@ -94,6 +94,15 @@ def ensure_unique_solution(board: Board) -> bool:
     return count_solutions(board) == 1
 
 
+def get_hint(board: Board, solution: Board) -> tuple[int, int, int] | None:
+    """Return one valid hint from the current board and solution."""
+    for row in range(SIZE):
+        for col in range(SIZE):
+            if board[row][col] == EMPTY:
+                return row, col, solution[row][col]
+    return None
+
+
 def generate_puzzle(clues: int | None = None, difficulty: str | None = None) -> tuple[Board, Board]:
     """Generate a Sudoku puzzle and its solved solution."""
     if clues is None:

@@ -49,6 +49,17 @@ function initializeTheme() {
   applyTheme(preferredTheme);
 }
 
+function getCellClassName(row, col, extraClass = '') {
+  const classes = ['sudoku-cell'];
+  if ((Math.floor(row / 3) + Math.floor(col / 3)) % 2 === 1) {
+    classes.push('group-alt');
+  }
+  if (extraClass) {
+    classes.push(extraClass);
+  }
+  return classes.join(' ');
+}
+
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
   boardDiv.innerHTML = '';
@@ -59,7 +70,7 @@ function createBoardElement() {
       const input = document.createElement('input');
       input.type = 'text';
       input.maxLength = 1;
-      input.className = 'sudoku-cell';
+      input.className = getCellClassName(i, j);
       input.dataset.row = i;
       input.dataset.col = j;
       input.addEventListener('input', (e) => {
@@ -116,10 +127,11 @@ function renderPuzzle(puz) {
       if (val !== 0) {
         inp.value = val;
         inp.disabled = true;
-        inp.className += ' prefilled';
+        inp.className = getCellClassName(i, j, 'prefilled');
       } else {
         inp.value = '';
         inp.disabled = false;
+        inp.className = getCellClassName(i, j);
       }
     }
   }
@@ -214,9 +226,11 @@ async function checkSolution() {
   for (let idx = 0; idx < inputs.length; idx++) {
     const inp = inputs[idx];
     if (inp.disabled) continue;
-    inp.className = 'sudoku-cell';
+    const row = Math.floor(idx / SIZE);
+    const col = idx % SIZE;
+    inp.className = getCellClassName(row, col);
     if (incorrect.has(idx)) {
-      inp.className = 'sudoku-cell incorrect';
+      inp.className = getCellClassName(row, col, 'incorrect');
     }
   }
   if (incorrect.size === 0) {
@@ -252,7 +266,7 @@ async function requestHint() {
   const input = inputs[index];
   if (input) {
     input.value = data.value;
-    input.className = 'sudoku-cell hinted';
+    input.className = getCellClassName(data.row, data.col, 'hinted');
     input.disabled = false;
   }
   msg.style.color = '#388e3c';

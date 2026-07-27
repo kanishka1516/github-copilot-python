@@ -1,46 +1,50 @@
 :root {
     color-scheme: light;
-    --page-bg: #f4f4f4;
+    --page-bg: #f4f7fb;
     --surface-bg: #ffffff;
-    --text-color: #1f2937;
-    --heading-color: #111827;
-    --subtle-text: #4b5563;
-    --board-border: #1f2937;
-    --cell-bg: #fafafa;
-    --cell-border: #bdbdbd;
-    --cell-focus-bg: #e0f7fa;
-    --cell-prefilled-bg: #e0e0e0;
-    --cell-prefilled-color: #111827;
-    --cell-incorrect-bg: #fecaca;
+    --surface-muted: #f8fafc;
+    --text-color: #14213d;
+    --heading-color: #0f172a;
+    --subtle-text: #475569;
+    --board-border: #1e293b;
+    --cell-bg: #ffffff;
+    --cell-alt-bg: #f1f5f9;
+    --cell-border: #cbd5e1;
+    --cell-focus-bg: #dbeafe;
+    --cell-prefilled-bg: #e2e8f0;
+    --cell-prefilled-color: #0f172a;
+    --cell-incorrect-bg: #fee2e2;
     --cell-hinted-bg: #dcfce7;
-    --button-bg: #1976d2;
-    --button-hover-bg: #1565c0;
-    --button-text: #ffffff;
-    --input-border: #bdbdbd;
-    --shadow: rgba(15, 23, 42, 0.12);
-    --message-error: #d32f2f;
-    --message-success: #388e3c;
+    --button-bg: #2563eb;
+    --button-hover-bg: #1d4ed8;
+    --button-text: #f8fafc;
+    --input-border: #cbd5e1;
+    --shadow: rgba(15, 23, 42, 0.14);
+    --message-error: #dc2626;
+    --message-success: #15803d;
 }
 
 body[data-theme='dark'] {
     color-scheme: dark;
-    --page-bg: #111827;
-    --surface-bg: #1f2937;
-    --text-color: #f3f4f6;
-    --heading-color: #f9fafb;
-    --subtle-text: #d1d5db;
-    --board-border: #f9fafb;
-    --cell-bg: #374151;
-    --cell-border: #6b7280;
+    --page-bg: #0f172a;
+    --surface-bg: #111827;
+    --surface-muted: #111827;
+    --text-color: #f8fafc;
+    --heading-color: #f8fafc;
+    --subtle-text: #cbd5e1;
+    --board-border: #f8fafc;
+    --cell-bg: #1f2937;
+    --cell-alt-bg: #273449;
+    --cell-border: #475569;
     --cell-focus-bg: #334155;
-    --cell-prefilled-bg: #4b5563;
-    --cell-prefilled-color: #f9fafb;
+    --cell-prefilled-bg: #374151;
+    --cell-prefilled-color: #f8fafc;
     --cell-incorrect-bg: #7f1d1d;
     --cell-hinted-bg: #14532d;
-    --button-bg: #2563eb;
-    --button-hover-bg: #1d4ed8;
+    --button-bg: #3b82f6;
+    --button-hover-bg: #2563eb;
     --button-text: #f8fafc;
-    --input-border: #6b7280;
+    --input-border: #475569;
     --shadow: rgba(0, 0, 0, 0.35);
     --message-error: #f87171;
     --message-success: #4ade80;
@@ -51,12 +55,13 @@ body[data-theme='dark'] {
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: var(--page-bg);
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, var(--page-bg) 0%, var(--surface-muted) 100%);
     color: var(--text-color);
     margin: 0;
     min-height: 100vh;
     padding: 0;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .app-shell {
@@ -72,63 +77,128 @@ body {
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .title-group {
     text-align: left;
+    max-width: 640px;
 }
 
 h1 {
     margin: 0 0 6px;
     color: var(--heading-color);
     font-size: clamp(1.8rem, 4vw, 2.6rem);
+    letter-spacing: -0.02em;
 }
 
 .subtitle {
     margin: 0;
     color: var(--subtle-text);
+    font-size: clamp(0.95rem, 2vw, 1rem);
 }
 
 .theme-toggle {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border: 1px solid var(--input-border);
     border-radius: 999px;
     background: var(--surface-bg);
     color: var(--text-color);
     cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    box-shadow: 0 6px 16px var(--shadow);
 }
 
 .theme-toggle:hover {
     transform: translateY(-1px);
+    box-shadow: 0 8px 24px var(--shadow);
 }
 
-#sudoku-board {
-    display: inline-block;
-    margin: 24px auto 0;
-    border: 4px solid var(--board-border);
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px auto 0;
+    padding: 12px;
+    border-radius: 16px;
     background: var(--surface-bg);
     box-shadow: 0 10px 24px var(--shadow);
 }
 
+button {
+    padding: 10px 16px;
+    border: none;
+    background: var(--button-bg);
+    color: var(--button-text);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+    min-height: 44px;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18);
+}
+
+button:hover {
+    transform: translateY(-1px);
+    background: var(--button-hover-bg);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+#timer-display,
+#message {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+#message {
+    color: var(--message-error);
+    min-height: 1.2em;
+}
+
+#sudoku-board {
+    display: grid;
+    width: min(100%, 560px);
+    margin: 24px auto 0;
+    border: 4px solid var(--board-border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--surface-bg);
+    box-shadow: 0 16px 40px var(--shadow);
+}
+
 .sudoku-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
 }
 
 .sudoku-cell {
-    width: clamp(24px, 7vw, 40px);
-    height: clamp(24px, 7vw, 40px);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-height: 38px;
     border: 1px solid var(--cell-border);
     text-align: center;
-    font-size: clamp(14px, 2.5vw, 20px);
+    font-size: clamp(0.95rem, 2.3vw, 1.3rem);
+    font-weight: 600;
     outline: none;
     background: var(--cell-bg);
     color: var(--text-color);
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease;
+    padding: 0;
+}
+
+.sudoku-cell.group-alt {
+    background: var(--cell-alt-bg);
 }
 
 .sudoku-cell:focus {
@@ -137,7 +207,7 @@ h1 {
 
 .sudoku-cell.prefilled {
     background: var(--cell-prefilled-bg);
-    font-weight: bold;
+    font-weight: 700;
     color: var(--cell-prefilled-color);
 }
 
@@ -159,42 +229,6 @@ h1 {
     border-bottom: 3px solid var(--board-border);
 }
 
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin: 20px auto 0;
-}
-
-button {
-    padding: 8px 18px;
-    border: none;
-    background: var(--button-bg);
-    color: var(--button-text);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-button:hover {
-    background: var(--button-hover-bg);
-}
-
-#timer-display {
-    margin-left: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    color: var(--text-color);
-}
-
-#message {
-    margin-left: 8px;
-    font-size: 16px;
-    color: var(--message-error);
-}
-
 @media (max-width: 640px) {
     .app-shell {
         padding: 16px 12px 40px;
@@ -211,10 +245,26 @@ button:hover {
 
     .controls {
         flex-direction: column;
+        align-items: stretch;
+    }
+
+    button {
+        width: 100%;
     }
 
     #timer-display,
     #message {
         margin-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .theme-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sudoku-cell {
+        font-size: clamp(0.85rem, 5vw, 1rem);
     }
 }

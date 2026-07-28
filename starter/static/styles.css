@@ -255,6 +255,11 @@ button:active,
     background: var(--surface-muted);
     color: var(--text-color);
     font-weight: 600;
+    border: 1px solid var(--input-border);
+}
+
+.leaderboard-list li:nth-child(1) {
+    background: linear-gradient(90deg, rgba(250, 204, 21, 0.2), var(--surface-muted));
 }
 
 .sudoku-row {

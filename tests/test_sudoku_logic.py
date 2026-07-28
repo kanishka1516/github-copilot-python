@@ -104,6 +104,15 @@ def test_remove_cells_reduces_the_number_of_clues():
     assert empty_cells == 81 - 35
 
 
+def test_remove_cells_preserves_unique_solution():
+    board = sudoku_logic.create_empty_board()
+    sudoku_logic.fill_board(board)
+
+    sudoku_logic.remove_cells(board, clues=35)
+
+    assert sudoku_logic.ensure_unique_solution(board) is True
+
+
 def test_generate_puzzle_returns_a_puzzle_and_solution():
     puzzle, solution = sudoku_logic.generate_puzzle(clues=35)
 
@@ -112,6 +121,13 @@ def test_generate_puzzle_returns_a_puzzle_and_solution():
     assert len(solution) == sudoku_logic.SIZE
     assert sum(cell == sudoku_logic.EMPTY for row in puzzle for cell in row) == 81 - 35
     assert sum(cell == sudoku_logic.EMPTY for row in solution for cell in row) == 0
+
+
+def test_count_solutions_detects_multiple_solutions_for_an_empty_board():
+    board = sudoku_logic.create_empty_board()
+
+    assert sudoku_logic.count_solutions(board) >= 2
+    assert sudoku_logic.ensure_unique_solution(board) is False
 
 
 def test_generated_puzzle_has_a_unique_solution():

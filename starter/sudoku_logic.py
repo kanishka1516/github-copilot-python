@@ -64,14 +64,25 @@ def fill_board(board: Board) -> bool:
 
 
 def remove_cells(board: Board, clues: int) -> None:
-    """Remove values from the board until the number of clues is reached."""
-    attempts = SIZE * SIZE - clues
-    while attempts > 0:
-        row = random.randrange(SIZE)
-        col = random.randrange(SIZE)
-        if board[row][col] != EMPTY:
-            board[row][col] = EMPTY
-            attempts -= 1
+    """Remove values from the board while preserving a unique solution."""
+    target_empty_cells = SIZE * SIZE - clues
+    empty_cells = sum(cell == EMPTY for row in board for cell in row)
+
+    positions = [(row, col) for row in range(SIZE) for col in range(SIZE)]
+    random.shuffle(positions)
+
+    for row, col in positions:
+        if empty_cells >= target_empty_cells:
+            break
+        if board[row][col] == EMPTY:
+            continue
+
+        original_value = board[row][col]
+        board[row][col] = EMPTY
+        if ensure_unique_solution(board):
+            empty_cells += 1
+        else:
+            board[row][col] = original_value
 
 
 def count_solutions(board: Board) -> int:
@@ -131,5 +142,6 @@ def generate_puzzle(clues: int | None = None, difficulty: str | None = None) -> 
         fill_board(board)
         solution = deep_copy(board)
         remove_cells(board, clues)
-        if ensure_unique_solution(board):
+        empty_cells = sum(cell == EMPTY for row in board for cell in row)
+        if ensure_unique_solution(board) and empty_cells == SIZE * SIZE - clues:
             return deep_copy(board), solution

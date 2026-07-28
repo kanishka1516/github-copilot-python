@@ -215,20 +215,25 @@ function renderPuzzle(puz) {
 function getLeaderboardEntries() {
   try {
     const raw = window.localStorage.getItem(LEADERBOARD_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     return [];
   }
 }
 
 function saveLeaderboardEntries(entries) {
-  window.localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries));
+  try {
+    window.localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries));
+  } catch (error) {
+    // Ignore storage failures.
+  }
 }
 
 function renderLeaderboard() {
   const entries = getLeaderboardEntries()
     .slice()
-    .sort((a, b) => a.time - b.time)
+    .sort((a, b) => Number(a.time) - Number(b.time))
     .slice(0, 10);
   const list = document.getElementById('leaderboard-list');
   if (!list) return;
@@ -240,8 +245,10 @@ function renderLeaderboard() {
     return;
   }
   entries.forEach((entry, index) => {
+    const safeName = String(entry.name || 'Anonymous').trim() || 'Anonymous';
+    const safeDifficulty = String(entry.difficulty || 'medium').toLowerCase();
     const item = document.createElement('li');
-    item.textContent = `${index + 1}. ${entry.name} — ${formatTime(entry.time)} — ${entry.difficulty}`;
+    item.textContent = `${index + 1}. ${safeName} — ${formatTime(Number(entry.time || 0))} — ${safeDifficulty}`;
     list.appendChild(item);
   });
 }
@@ -249,10 +256,15 @@ function renderLeaderboard() {
 function addLeaderboardEntry(name, timeSeconds, difficulty) {
   const entries = getLeaderboardEntries();
   const normalizedName = String(name || 'Anonymous').trim() || 'Anonymous';
-  const newEntries = entries.concat([{ name: normalizedName, time: Number(timeSeconds), difficulty }])
-    .sort((a, b) => a.time - b.time)
+  const nextEntry = {
+    name: normalizedName,
+    time: Number(timeSeconds),
+    difficulty: String(difficulty || 'medium').toLowerCase(),
+  };
+  const nextEntries = entries.concat([nextEntry])
+    .sort((a, b) => Number(a.time) - Number(b.time))
     .slice(0, 10);
-  saveLeaderboardEntries(newEntries);
+  saveLeaderboardEntries(nextEntries);
   renderLeaderboard();
 }
 

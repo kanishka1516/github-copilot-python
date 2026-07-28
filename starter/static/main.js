@@ -116,7 +116,11 @@ function updateCellValidation(input) {
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
-  boardDiv.innerHTML = '';
+  if (!boardDiv) {
+    return;
+  }
+
+  boardDiv.replaceChildren();
   for (let i = 0; i < SIZE; i++) {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'sudoku-row';
@@ -173,7 +177,11 @@ function renderPuzzle(puz) {
   puzzle = puz;
   createBoardElement();
   const boardDiv = document.getElementById('sudoku-board');
-  const inputs = boardDiv.getElementsByTagName('input');
+  if (!boardDiv) {
+    return;
+  }
+
+  const inputs = boardDiv.querySelectorAll('input');
   for (let i = 0; i < SIZE; i++) {
     for (let j = 0; j < SIZE; j++) {
       const idx = i * SIZE + j;

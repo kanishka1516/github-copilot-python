@@ -36,6 +36,29 @@ def test_index_page_includes_theme_toggle():
     assert 'aria-label="Toggle dark mode"' in html
 
 
+def test_index_page_includes_difficulty_selector():
+    client = flask_app.app.test_client()
+    response = client.get('/')
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'id="difficulty-select"' in html
+    assert 'value="easy"' in html
+    assert 'value="medium"' in html
+    assert 'value="hard"' in html
+
+
+def test_index_page_includes_leaderboard_ui():
+    client = flask_app.app.test_client()
+    response = client.get('/')
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'id="player-name"' in html
+    assert 'id="leaderboard-list"' in html
+    assert 'Top 10 Leaderboard' in html
+
+
 def test_create_empty_board_returns_empty_grid():
     board = sudoku_logic.create_empty_board()
 
@@ -49,6 +72,18 @@ def test_is_safe_detects_conflicting_values():
 
     assert sudoku_logic.is_safe(board, 0, 1, 1) is False
     assert sudoku_logic.is_safe(board, 0, 1, 2) is True
+
+
+def test_is_move_valid_detects_row_column_and_box_conflicts():
+    board = sudoku_logic.create_empty_board()
+    board[0][0] = 1
+    board[0][1] = 2
+    board[1][0] = 3
+    board[1][1] = 4
+
+    assert sudoku_logic.is_move_valid(board, 0, 2, 1) is False
+    assert sudoku_logic.is_move_valid(board, 0, 2, 2) is False
+    assert sudoku_logic.is_move_valid(board, 0, 2, 5) is True
 
 
 def test_fill_board_solves_an_empty_board():
@@ -141,6 +176,25 @@ def test_new_game_tracks_selected_difficulty():
 
     assert response.status_code == 200
     assert flask_app.CURRENT['difficulty'] == 'hard'
+
+
+def test_new_game_uses_difficulty_to_control_clue_count():
+    client = flask_app.app.test_client()
+
+    easy_response = client.get('/new?difficulty=easy')
+    medium_response = client.get('/new?difficulty=medium')
+    hard_response = client.get('/new?difficulty=hard')
+
+    easy_puzzle = easy_response.get_json()['puzzle']
+    medium_puzzle = medium_response.get_json()['puzzle']
+    hard_puzzle = hard_response.get_json()['puzzle']
+
+    easy_clues = sum(cell != sudoku_logic.EMPTY for row in easy_puzzle for cell in row)
+    medium_clues = sum(cell != sudoku_logic.EMPTY for row in medium_puzzle for cell in row)
+    hard_clues = sum(cell != sudoku_logic.EMPTY for row in hard_puzzle for cell in row)
+
+    assert easy_clues > medium_clues
+    assert medium_clues > hard_clues
 
 
 def test_check_solution_includes_difficulty_in_response():

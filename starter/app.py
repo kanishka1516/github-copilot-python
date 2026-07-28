@@ -54,7 +54,8 @@ def index():
 
 @app.route('/new')
 def new_game():
-    difficulty = request.args.get('difficulty', 'medium')
+    requested_difficulty = (request.args.get('difficulty') or CURRENT.get('difficulty') or 'medium').lower()
+    difficulty = requested_difficulty if requested_difficulty in {'easy', 'medium', 'hard'} else 'medium'
     clues = request.args.get('clues')
     if clues is None:
         puzzle, solution = sudoku_logic.generate_puzzle(difficulty=difficulty)

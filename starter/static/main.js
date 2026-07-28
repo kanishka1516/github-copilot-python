@@ -7,6 +7,7 @@ let timerInterval = null;
 let timerStartedAt = null;
 let currentDifficulty = 'medium';
 let completedTimeSeconds = 0;
+let leaderboardEntrySaved = false;
 
 function getStoredTheme() {
   try {
@@ -60,6 +61,57 @@ function getCellClassName(row, col, extraClass = '') {
   return classes.join(' ');
 }
 
+function isMoveValid(board, row, col, value) {
+  if (value === '' || value === null) {
+    return true;
+  }
+
+  const num = Number(value);
+  if (!Number.isInteger(num) || num < 1 || num > 9) {
+    return true;
+  }
+
+  for (let index = 0; index < SIZE; index += 1) {
+    if (index !== col && board[row][index] === num) {
+      return false;
+    }
+    if (index !== row && board[index][col] === num) {
+      return false;
+    }
+  }
+
+  const startRow = Math.floor(row / 3) * 3;
+  const startCol = Math.floor(col / 3) * 3;
+  for (let boxRow = startRow; boxRow < startRow + 3; boxRow += 1) {
+    for (let boxCol = startCol; boxCol < startCol + 3; boxCol += 1) {
+      if ((boxRow !== row || boxCol !== col) && board[boxRow][boxCol] === num) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function updateCellValidation(input) {
+  const row = Number(input.dataset.row);
+  const col = Number(input.dataset.col);
+  const board = getBoardState();
+  const isValid = isMoveValid(board, row, col, input.value);
+  const baseClass = getCellClassName(row, col);
+
+  if (input.disabled) {
+    return;
+  }
+
+  if (isValid) {
+    input.className = baseClass;
+    return;
+  }
+
+  input.className = getCellClassName(row, col, 'invalid');
+}
+
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
   boardDiv.innerHTML = '';
@@ -76,6 +128,7 @@ function createBoardElement() {
       input.addEventListener('input', (e) => {
         const val = e.target.value.replace(/[^1-9]/g, '');
         e.target.value = val;
+        updateCellValidation(e.target);
       });
       rowDiv.appendChild(input);
     }
@@ -151,7 +204,10 @@ function saveLeaderboardEntries(entries) {
 }
 
 function renderLeaderboard() {
-  const entries = getLeaderboardEntries();
+  const entries = getLeaderboardEntries()
+    .slice()
+    .sort((a, b) => a.time - b.time)
+    .slice(0, 10);
   const list = document.getElementById('leaderboard-list');
   if (!list) return;
   list.innerHTML = '';
@@ -170,11 +226,23 @@ function renderLeaderboard() {
 
 function addLeaderboardEntry(name, timeSeconds, difficulty) {
   const entries = getLeaderboardEntries();
-  const newEntries = entries.concat([{ name, time: timeSeconds, difficulty }])
+  const normalizedName = String(name || 'Anonymous').trim() || 'Anonymous';
+  const newEntries = entries.concat([{ name: normalizedName, time: Number(timeSeconds), difficulty }])
     .sort((a, b) => a.time - b.time)
     .slice(0, 10);
   saveLeaderboardEntries(newEntries);
   renderLeaderboard();
+}
+
+function saveCompletedScoreToLeaderboard() {
+  if (leaderboardEntrySaved || completedTimeSeconds <= 0) {
+    return;
+  }
+
+  const playerNameInput = document.getElementById('player-name');
+  const name = playerNameInput ? playerNameInput.value : '';
+  addLeaderboardEntry(name, completedTimeSeconds, currentDifficulty);
+  leaderboardEntrySaved = true;
 }
 
 function getSelectedDifficulty() {
@@ -189,6 +257,7 @@ async function newGame() {
   renderPuzzle(data.puzzle);
   currentDifficulty = data.difficulty || difficulty;
   completedTimeSeconds = 0;
+  leaderboardEntrySaved = false;
   startTimer();
   document.getElementById('message').innerText = '';
 }
@@ -223,6 +292,8 @@ async function checkSolution() {
     return;
   }
   const incorrect = new Set(data.incorrect.map(x => x[0]*SIZE + x[1]));
+  const boardDiv = document.getElementById('sudoku-board');
+  const inputs = boardDiv.getElementsByTagName('input');
   for (let idx = 0; idx < inputs.length; idx++) {
     const inp = inputs[idx];
     if (inp.disabled) continue;
@@ -238,6 +309,7 @@ async function checkSolution() {
     const elapsedSeconds = data.elapsed_seconds ?? ((Date.now() - timerStartedAt) / 1000);
     completedTimeSeconds = elapsedSeconds;
     updateTimerDisplay(elapsedSeconds);
+    saveCompletedScoreToLeaderboard();
     msg.style.color = '#388e3c';
     msg.innerText = 'Congratulations! You solved it!';
   } else {
@@ -276,9 +348,16 @@ async function requestHint() {
 // Wire buttons
 window.addEventListener('load', () => {
   initializeTheme();
+  renderLeaderboard();
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
+  }
+  const difficultySelect = document.getElementById('difficulty-select');
+  if (difficultySelect) {
+    difficultySelect.addEventListener('change', () => {
+      newGame();
+    });
   }
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('hint-cell').addEventListener('click', requestHint);

@@ -20,6 +20,14 @@
     </header>
 
     <div class="controls">
+      <label class="difficulty-picker" for="difficulty-select">
+        <span class="difficulty-picker__label">Difficulty</span>
+        <select id="difficulty-select" name="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
       <button id="new-game">New Game</button>
       <button id="hint-cell">Hint</button>
       <button id="check-solution">Check Solution</button>
@@ -28,6 +36,17 @@
     </div>
 
     <div id="sudoku-board" class="sudoku-board" aria-label="Sudoku board"></div>
+
+    <section class="leaderboard-card" aria-labelledby="leaderboard-title">
+      <div class="leaderboard-card__header">
+        <h2 id="leaderboard-title">Top 10 Leaderboard</h2>
+        <label class="leaderboard-name" for="player-name">
+          <span class="leaderboard-name__label">Player name</span>
+          <input id="player-name" name="player-name" type="text" maxlength="24" placeholder="Anonymous" autocomplete="nickname">
+        </label>
+      </div>
+      <ul id="leaderboard-list" class="leaderboard-list" aria-live="polite"></ul>
+    </section>
   </main>
 
   <script src="/static/main.js"></script>

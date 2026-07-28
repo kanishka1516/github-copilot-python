@@ -18,15 +18,25 @@ def create_empty_board() -> Board:
 
 def is_safe(board: Board, row: int, col: int, num: int) -> bool:
     """Return True when placing num at the given position is valid."""
+    return is_move_valid(board, row, col, num)
+
+
+def is_move_valid(board: Board, row: int, col: int, num: int) -> bool:
+    """Return True when placing num at the given position does not conflict with the board."""
+    if num == EMPTY:
+        return True
+
     for index in range(SIZE):
-        if board[row][index] == num or board[index][col] == num:
+        if index != col and board[row][index] == num:
+            return False
+        if index != row and board[index][col] == num:
             return False
 
     start_row = row - row % 3
     start_col = col - col % 3
     for box_row in range(start_row, start_row + 3):
         for box_col in range(start_col, start_col + 3):
-            if board[box_row][box_col] == num:
+            if (box_row, box_col) != (row, col) and board[box_row][box_col] == num:
                 return False
 
     return True

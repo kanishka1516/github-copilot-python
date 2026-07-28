@@ -162,8 +162,17 @@ function formatTime(seconds) {
 
 function updateTimerDisplay(seconds) {
   const timerDisplay = document.getElementById('timer-display');
-  if (timerDisplay) {
-    timerDisplay.innerText = `Time: ${formatTime(seconds)}`;
+  if (!timerDisplay) {
+    return;
+  }
+
+  const valueElement = timerDisplay.querySelector('.timer-display__value');
+  const formattedTime = formatTime(seconds);
+
+  if (valueElement) {
+    valueElement.textContent = formattedTime;
+  } else {
+    timerDisplay.textContent = formattedTime;
   }
 }
 
@@ -179,6 +188,9 @@ function startTimer() {
   timerStartedAt = Date.now();
   updateTimerDisplay(0);
   timerInterval = window.setInterval(() => {
+    if (!timerStartedAt) {
+      return;
+    }
     const elapsedSeconds = (Date.now() - timerStartedAt) / 1000;
     updateTimerDisplay(elapsedSeconds);
   }, 250);
@@ -429,6 +441,7 @@ async function requestHint() {
     msg.innerText = data.error;
     return;
   }
+
   const boardDiv = document.getElementById('sudoku-board');
   const inputs = boardDiv.getElementsByTagName('input');
   const index = data.row * SIZE + data.col;
@@ -438,6 +451,7 @@ async function requestHint() {
     input.className = getCellClassName(data.row, data.col, 'hinted');
     input.disabled = false;
   }
+
   msg.style.color = '#388e3c';
   msg.innerText = `Hint placed in row ${data.row + 1}, column ${data.col + 1}.`;
 }

@@ -8,6 +8,8 @@ let timerStartedAt = null;
 let currentDifficulty = 'medium';
 let completedTimeSeconds = 0;
 let leaderboardEntrySaved = false;
+let activeGameRequestId = 0;
+let activeGameController = null;
 
 function getStoredTheme() {
   try {
@@ -251,15 +253,48 @@ function getSelectedDifficulty() {
 }
 
 async function newGame() {
+  if (activeGameController) {
+    activeGameController.abort();
+  }
+
   const difficulty = getSelectedDifficulty();
-  const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
-  const data = await res.json();
-  renderPuzzle(data.puzzle);
-  currentDifficulty = data.difficulty || difficulty;
-  completedTimeSeconds = 0;
-  leaderboardEntrySaved = false;
-  startTimer();
-  document.getElementById('message').innerText = '';
+  const requestId = activeGameRequestId + 1;
+  activeGameRequestId = requestId;
+
+  const controller = new AbortController();
+  activeGameController = controller;
+
+  try {
+    const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`, { signal: controller.signal });
+    const data = await res.json();
+
+    if (requestId !== activeGameRequestId || controller.signal.aborted) {
+      return;
+    }
+
+    renderPuzzle(data.puzzle);
+    currentDifficulty = data.difficulty || difficulty;
+    completedTimeSeconds = 0;
+    leaderboardEntrySaved = false;
+    startTimer();
+    document.getElementById('message').innerText = '';
+  } catch (error) {
+    if (controller.signal.aborted) {
+      return;
+    }
+
+    if (requestId === activeGameRequestId) {
+      const msg = document.getElementById('message');
+      if (msg) {
+        msg.style.color = '#d32f2f';
+        msg.innerText = 'Unable to load a new game.';
+      }
+    }
+  } finally {
+    if (activeGameController === controller) {
+      activeGameController = null;
+    }
+  }
 }
 
 function getBoardState() {

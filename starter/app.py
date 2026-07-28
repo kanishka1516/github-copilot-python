@@ -100,18 +100,29 @@ def check_solution():
     incorrect = []
     for i in range(sudoku_logic.SIZE):
         for j in range(sudoku_logic.SIZE):
-            if board[i][j] != solution[i][j]:
+            cell_value = board[i][j]
+            if cell_value == sudoku_logic.EMPTY:
+                continue
+            if cell_value != solution[i][j]:
                 incorrect.append([i, j])
 
     completed = len(incorrect) == 0 and all(cell != sudoku_logic.EMPTY for row in board for cell in row)
     if completed and CURRENT.get('timer_completed_at') is None:
         CURRENT['timer_completed_at'] = time.monotonic()
 
+    if completed:
+        message = 'Congratulations! You solved it!'
+    elif incorrect:
+        message = 'Some cells are incorrect.'
+    else:
+        message = 'No incorrect entries found.'
+
     return jsonify({
         'incorrect': incorrect,
         'completed': completed,
         'elapsed_seconds': _get_elapsed_seconds(),
         'difficulty': CURRENT.get('difficulty', 'medium'),
+        'message': message,
     })
 
 

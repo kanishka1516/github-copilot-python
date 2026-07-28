@@ -141,6 +141,7 @@ def test_check_solution_detects_completion_when_board_is_complete():
     response = client.post('/check', json={'board': solution})
 
     assert response.get_json()['completed'] is True
+    assert response.get_json()['message'] == 'Congratulations! You solved it!'
 
 
 def test_check_solution_reports_incorrect_cells_for_wrong_entries():
@@ -157,6 +158,24 @@ def test_check_solution_reports_incorrect_cells_for_wrong_entries():
     assert response.status_code == 200
     assert response.get_json()['incorrect'] == [[0, 0]]
     assert response.get_json()['completed'] is False
+    assert response.get_json()['message'] == 'Some cells are incorrect.'
+
+
+def test_check_solution_reports_no_incorrect_entries_for_incomplete_correct_board():
+    puzzle, solution = sudoku_logic.generate_puzzle(clues=35)
+    flask_app.CURRENT['solution'] = solution
+    flask_app.CURRENT['puzzle'] = puzzle
+
+    incomplete_board = [row[:] for row in solution]
+    incomplete_board[0][0] = sudoku_logic.EMPTY
+
+    client = flask_app.app.test_client()
+    response = client.post('/check', json={'board': incomplete_board})
+
+    assert response.status_code == 200
+    assert response.get_json()['incorrect'] == []
+    assert response.get_json()['completed'] is False
+    assert response.get_json()['message'] == 'No incorrect entries found.'
 
 
 def test_new_game_starts_timer(monkeypatch):

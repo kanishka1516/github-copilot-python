@@ -10,6 +10,7 @@ let completedTimeSeconds = 0;
 let leaderboardEntrySaved = false;
 let activeGameRequestId = 0;
 let activeGameController = null;
+let lastIncorrectIndices = new Set();
 
 function getStoredTheme() {
   try {
@@ -101,8 +102,18 @@ function updateCellValidation(input) {
   const board = getBoardState();
   const isValid = isMoveValid(board, row, col, input.value);
   const baseClass = getCellClassName(row, col);
+  const index = row * SIZE + col;
 
   if (input.disabled) {
+    return;
+  }
+
+  if (lastIncorrectIndices.has(index)) {
+    lastIncorrectIndices.delete(index);
+  }
+
+  if (input.value === '' || input.value === null) {
+    input.className = baseClass;
     return;
   }
 
@@ -175,6 +186,7 @@ function startTimer() {
 
 function renderPuzzle(puz) {
   puzzle = puz;
+  lastIncorrectIndices.clear();
   createBoardElement();
   const boardDiv = document.getElementById('sudoku-board');
   if (!boardDiv) {
@@ -320,6 +332,42 @@ function getBoardState() {
   return board;
 }
 
+function applyCheckResults(incorrectIndices) {
+  const incorrectSet = incorrectIndices instanceof Set ? incorrectIndices : new Set(incorrectIndices || []);
+  lastIncorrectIndices = incorrectSet;
+
+  const boardDiv = document.getElementById('sudoku-board');
+  if (!boardDiv) {
+    return;
+  }
+
+  const inputs = boardDiv.getElementsByTagName('input');
+  const board = getBoardState();
+  for (let idx = 0; idx < inputs.length; idx += 1) {
+    const inp = inputs[idx];
+    if (inp.disabled) {
+      continue;
+    }
+
+    const row = Math.floor(idx / SIZE);
+    const col = idx % SIZE;
+    const value = inp.value;
+
+    if (value === '') {
+      inp.className = getCellClassName(row, col);
+      continue;
+    }
+
+    if (incorrectSet.has(idx)) {
+      inp.className = getCellClassName(row, col, 'incorrect');
+    } else if (!isMoveValid(board, row, col, value)) {
+      inp.className = getCellClassName(row, col, 'invalid');
+    } else {
+      inp.className = getCellClassName(row, col);
+    }
+  }
+}
+
 async function checkSolution() {
   const board = getBoardState();
   const res = await fetch('/check', {
@@ -334,30 +382,24 @@ async function checkSolution() {
     msg.innerText = data.error;
     return;
   }
-  const incorrect = new Set(data.incorrect.map(x => x[0]*SIZE + x[1]));
-  const boardDiv = document.getElementById('sudoku-board');
-  const inputs = boardDiv.getElementsByTagName('input');
-  for (let idx = 0; idx < inputs.length; idx++) {
-    const inp = inputs[idx];
-    if (inp.disabled) continue;
-    const row = Math.floor(idx / SIZE);
-    const col = idx % SIZE;
-    inp.className = getCellClassName(row, col);
-    if (incorrect.has(idx)) {
-      inp.className = getCellClassName(row, col, 'incorrect');
-    }
-  }
-  if (incorrect.size === 0) {
+
+  const incorrect = new Set((data.incorrect || []).map(x => x[0] * SIZE + x[1]));
+  applyCheckResults(incorrect);
+
+  if (data.completed) {
     stopTimer();
     const elapsedSeconds = data.elapsed_seconds ?? ((Date.now() - timerStartedAt) / 1000);
     completedTimeSeconds = elapsedSeconds;
     updateTimerDisplay(elapsedSeconds);
     saveCompletedScoreToLeaderboard();
     msg.style.color = '#388e3c';
-    msg.innerText = 'Congratulations! You solved it!';
+    msg.innerText = data.message || 'Congratulations! You solved it!';
+  } else if (incorrect.size === 0) {
+    msg.style.color = '#388e3c';
+    msg.innerText = data.message || 'No incorrect entries found.';
   } else {
     msg.style.color = '#d32f2f';
-    msg.innerText = 'Some cells are incorrect.';
+    msg.innerText = data.message || 'Some cells are incorrect.';
   }
 }
 
